@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+
+    // Client apps may read their assigned records only after role/ownership
+    // fields and custom claims are implemented. Deny by default for production.
+    match /passengers/{passengerId} {
+      allow read, write: if false;
+    }
+    match /drivers/{driverId} {
+      allow read, write: if false;
+    }
+    match /smsOutbox/{messageId} {
+      // Only trusted Cloud Functions/Admin SDK should create SMS jobs.
+      allow read, write: if false;
+    }
+    match /statusEvents/{eventId} {
+      allow read, write: if false;
+    }
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+  }
+}
